@@ -7,7 +7,7 @@ import numpy as np
 
 class lstm:
     
-    def __init__(self, X_train, y_train):
+    def __init__(self, X_train, y_train, n_cols):
 
         # Assuming X_train and y_train are already preprocessed sequences
         # X_train shape: (number of sequences, number of time steps, number of features)
@@ -15,30 +15,21 @@ class lstm:
         # y_train shape: (number of sequences,)
         self.y = y_train
 
-        # LSTM model
-        self.model = Sequential()
-        # Adjust input_shape to match the structure of your data
-        self.model.add(LSTM(units=50, return_sequences=True, input_shape=(X_train.shape[1], X_train.shape[2])))
-        self.model.add(Dropout(rate=0.2))
-
-        self.model.add(LSTM(units=50, return_sequences=True))
-        self.model.add(Dropout(rate=0.2))
-
-        self.model.add(LSTM(units=50, return_sequences=True))
-        self.model.add(Dropout(rate=0.2))
-
-        self.model.add(LSTM(units=50, return_sequences=False))
-        self.model.add(Dropout(rate=0.2))
-
-        # Output layer with 1 unit for regression
-        self.model.add(Dense(units=1))
-        self.model.compile(optimizer='adam', loss='mean_squared_error')
+        self.model = Sequential([
+                LSTM(50, return_sequences= True, input_shape= (X_train.shape[1], n_cols)),
+                LSTM(64, return_sequences= False),
+                Dense(32),
+                Dense(16),
+                Dense(n_cols)
+            ])
 
         print("Architecture of the Multi-Stack LSTM Layer is ready!")
+        self.model.compile(optimizer='adam', loss='mse', metrics="mean_absolute_error")
+        self.model.summary()
 
     def train_it(self):
-        self.model.fit(self.x, self.y, batch_size=32, epochs=20)
-        return self.model
+        history = self.model.fit(self.x, self.y, batch_size=32, epochs=100)
+        return self.model, history
 
     def predict_it(self, data):
         # Assuming data is a preprocessed sequence for prediction
